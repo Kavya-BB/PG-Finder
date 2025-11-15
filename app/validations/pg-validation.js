@@ -5,25 +5,25 @@ const pgValidationSchema = Joi.object({
         'any.required': 'pg name is required'
     }),
     location: Joi.object({
-        address: Joi.string().required().messages({
+        address: Joi.string().trim().required().messages({
             'any.required': 'address is required'
         }),
         coordinates: Joi.object({
             latitude: Joi.number().required().messages({
                 'any.required': 'latitude is required'
             }),
-            longitude: Joi.number().required(). messages({
+            longitude: Joi.number().required().messages({
                 'any.required': 'longitude is required'
             })
         }).required()
     }).required(),
     roomTypes: Joi.array().items(
         Joi.object({
-            roomType: Joi.string().required().messages({
+            roomType: Joi.string().trim().required().messages({
                 'any.required': 'room type is required'
             }),
-            name: Joi.string().required().messages({
-                'any.required': 'room name is required'
+            count: Joi.number().required().messages({
+                'any.required': 'rooms availability count is required'
             }),
             rent: Joi.number().min(0).required().messages({
                 'any.required': 'room rent is required'
@@ -33,8 +33,10 @@ const pgValidationSchema = Joi.object({
         'array.min': 'atleast one room type is required'
     }),
     description: Joi.string().allow('').optional(),
-    amenities: Joi.array().items(Joi.string()).optional(),
-    photos: Joi.array().items(Joi.string()).optional()
+    amenities: Joi.array().items(Joi.string().trim()).optional(),
+    pgPhotos: Joi.any().optional(),
+    pgCertificate: Joi.any().optional()
+
 });
 
 module.exports = { pgValidationSchema };

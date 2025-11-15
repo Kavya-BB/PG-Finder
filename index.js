@@ -17,6 +17,7 @@ const pgCltr = require('./app/controllers/pg-controller.js');
 
 const authenticateUser = require('./app/middlewares/authenticateUser.js');
 const authorization = require('./app/middlewares/authorizeUser.js');
+const { upload } = require('./app/middlewares/cloudinary.js');
 
 app.post('/user/register', userCtlr.register);
 app.post('/user/login', userCtlr.login);
@@ -25,7 +26,16 @@ app.get('/user/allusers', authenticateUser, authorization(['admin', 'owner']), u
 app.get('/user/account/:id', authenticateUser, userCtlr.account);
 app.delete('/user/remove/:id',authenticateUser, authorization(['admin', 'owner']), userCtlr.deleteAccount);
 
-app.post('/pg/createpg', authenticateUser, authorization(['owner']), pgCltr.createPg);
+app.post(
+    '/pg/createpg', 
+    authenticateUser, 
+    authorization(['owner']), 
+    upload.fields([
+        { name: 'pgPhotos', maxCount : 5 }, 
+        { name: 'pgCertificate', maxCount : 1 }
+    ]), 
+    pgCltr.createPg);
+app.get('/get/allpgs', authenticateUser, authorization(['admin', 'owner']), pgCltr.getAllPgs);
 
 
 app.listen(port, () => {

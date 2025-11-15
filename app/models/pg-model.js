@@ -20,15 +20,23 @@ const pgSchema = new mongoose.Schema({
     roomTypes: [
         {
             roomType: { type: String, required: true },
-            name: { type: String, required: true },
-            rent: { type: Number, required: true }
+            count: { type: Number, required: true },
+            rent: { type: Number, required: true, min: 0 }
         }
     ],
     description: {
         type: String
     },
-    amenities: [ String ],
-    photos: [ String ],
+    amenities: [{ type: String }],
+    pgPhotos: [{ type: String }],
+    pgCertificate: {
+        type: String,
+        required: true
+    },
+    isVerified: {
+        type: Boolean,
+        default: false
+    },
     rating: {
         type: Number,
         default: 0,
@@ -43,7 +51,6 @@ const pgSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     },
-
 });
 
 const Pg = mongoose.model('Pg', pgSchema);

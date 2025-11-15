@@ -20,18 +20,29 @@ pgCltr.createPg = async (req, res) => {
         const existingPg = await Pg.findOne({
             ownerId: req.userId,
             'location.address': value.location.address,
-            name: value.name
+            pgname: value.pgname
         });
         if(existingPg) {
             return res.status(403).json({ error: 'PG with a same name and address already exists!!!' });
         }
-        const pg = new Pg({ ...value, ownerId: req.userId });
+        const pgPhotos = Array.isArray(req.files?.pgPhotos) ? req.files.pgPhotos.map(file => file.path) : [];
+        const pgCertificate = req.files?.pgCertificate?.[0]?.path || null;
+        const pg = new Pg({ 
+            ...value, 
+            ownerId: req.userId, 
+            pgPhotos, 
+            pgCertificate 
+        });
         await pg.save();
         res.status(201).json(pg);
     } catch(err) {
         console.log(err);
-        res.status(500).json({ error: 'something went wrong while creating PG!!!s' });
+        res.status(500).json({ error: 'something went wrong while creating PG!!!' });
     }
+}
+
+pgCltr.getAllPgs = async(req, res) => {
+    res.send("get pg details");
 }
 
 module.exports = pgCltr;
