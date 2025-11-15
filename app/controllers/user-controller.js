@@ -73,6 +73,9 @@ userCtlr.allusers = async (req, res) => {
 userCtlr.account = async (req, res) => {
     try {
         const user = await User.findById(req.userId);
+        if(!user) {
+            res.status(404).json({ error: 'user not found' });
+        }
         res.json(user);
     } catch(err) {
         console.log(err);

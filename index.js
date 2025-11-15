@@ -36,6 +36,9 @@ app.post(
     ]), 
     pgCltr.createPg);
 app.get('/get/allpgs', authenticateUser, authorization(['admin', 'owner']), pgCltr.getAllPgs);
+app.get('/get/pgById/:id', authenticateUser, authorization(['admin', 'owner']), pgCltr.getPgById);
+app.put('/update/pg/:id', authenticateUser, authorization(['admin', 'owner']), pgCltr.updatePg);
+app.delete('/delete/pg/:id', authenticateUser, authorization(['admin', 'owner']), pgCltr.deletePg);
 
 
 app.listen(port, () => {
