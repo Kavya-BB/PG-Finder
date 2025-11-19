@@ -14,6 +14,9 @@ configureDB();
 
 const userCtlr = require('./app/controllers/user-controller.js');
 const pgCltr = require('./app/controllers/pg-controller.js');
+const bookingCltr = require('./app/controllers/booking-controller.js');
+const paymentCltr = require('./app/controllers/payment-controller.js');
+const ratingCltr = require('./app/controllers/rating-controller.js');
 
 const authenticateUser = require('./app/middlewares/authenticateUser.js');
 const authorization = require('./app/middlewares/authorizeUser.js');
@@ -24,6 +27,7 @@ app.post('/user/login', userCtlr.login);
 
 app.get('/user/allusers', authenticateUser, authorization(['admin', 'owner']), userCtlr.allusers);
 app.get('/user/account/:id', authenticateUser, userCtlr.account);
+app.put('/user/update/:id', authenticateUser, userCtlr.updateAccount);
 app.delete('/user/remove/:id',authenticateUser, authorization(['admin', 'owner']), userCtlr.deleteAccount);
 
 app.post(
@@ -38,9 +42,10 @@ app.post(
 app.get('/get/allpgs', authenticateUser, authorization(['admin', 'owner']), pgCltr.getAllPgs);
 app.get('/get/pgById/:id', authenticateUser, authorization(['admin', 'owner']), pgCltr.getPgById);
 app.put('/update/pg/:id', authenticateUser, authorization(['admin', 'owner']), pgCltr.updatePg);
+app.patch('/verify/:id', authenticateUser, authorization(['admin']), pgCltr.verifyC);
+app.patch('/approvePg/:id', authenticateUser, authorization(['admin']), pgCltr.approvePg);
 app.delete('/delete/pg/:id', authenticateUser, authorization(['admin', 'owner']), pgCltr.deletePg);
 
-
 app.listen(port, () => {
-    console.log('Serve running on the port', port);
+    console.log('Server running on the port', port);
 })

@@ -83,6 +83,21 @@ userCtlr.account = async (req, res) => {
     }
 };
 
+userCtlr.updateAccount = async (req, res) => {
+    const id = req.params.id;
+    const body = req.body;
+    try {
+        const user = await User.findByIdAndUpdate(id, body, { new: true });
+    if(!user) {
+        res.status(404).json({ error: 'User not found' });
+    }
+    res.json(user);
+    } catch(err) {
+        console.log(err);
+        res.status(500).json({ error: 'something went wrong!!!' });
+    }
+};
+
 userCtlr.deleteAccount = async (req, res) => {
     const id = req.params.id;
     try {
