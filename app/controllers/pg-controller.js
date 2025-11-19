@@ -1,7 +1,6 @@
 const Pg = require('../models/pg-model.js');
 const { pgValidationSchema } = require('../validations/pg-validation.js');
 const User = require('../models/user-model.js');
-const { boolean } = require('joi');
 const pgCltr = {};
 
 pgCltr.createPg = async (req, res) => {

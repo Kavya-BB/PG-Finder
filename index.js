@@ -46,6 +46,8 @@ app.patch('/verify/:id', authenticateUser, authorization(['admin']), pgCltr.veri
 app.patch('/approvePg/:id', authenticateUser, authorization(['admin']), pgCltr.approvePg);
 app.delete('/delete/pg/:id', authenticateUser, authorization(['admin', 'owner']), pgCltr.deletePg);
 
+app.post('/create/booking', bookingCltr.createBooking);
+
 app.listen(port, () => {
     console.log('Server running on the port', port);
 })
