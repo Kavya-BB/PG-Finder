@@ -42,11 +42,11 @@ app.post(
 app.get('/get/allpgs', authenticateUser, authorization(['admin', 'owner']), pgCltr.getAllPgs);
 app.get('/get/pgById/:id', authenticateUser, authorization(['admin', 'owner']), pgCltr.getPgById);
 app.put('/update/pg/:id', authenticateUser, authorization(['admin', 'owner']), pgCltr.updatePg);
-app.patch('/verify/:id', authenticateUser, authorization(['admin']), pgCltr.verifyC);
-app.patch('/approvePg/:id', authenticateUser, authorization(['admin']), pgCltr.approvePg);
+app.put('/verify/:id', authenticateUser, authorization(['admin']), pgCltr.verifyC);
+app.put('/approvePg/:id', authenticateUser, authorization(['admin']), pgCltr.approvePg);
 app.delete('/delete/pg/:id', authenticateUser, authorization(['admin', 'owner']), pgCltr.deletePg);
 
-app.post('/create/booking', bookingCltr.createBooking);
+app.post('/create/booking', authenticateUser, bookingCltr.createBooking);
 
 app.listen(port, () => {
     console.log('Server running on the port', port);

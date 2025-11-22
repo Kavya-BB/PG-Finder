@@ -10,8 +10,8 @@ const bookingValidationSchema = Joi.object({
     duration: Joi.number().min(1).required().messages({
         'any.required': 'Duration is required'
     }),
-    amount: Joi.number().min(0).required().messages({
-        'any.required': 'Amount is required'
+    durationType: Joi.string().valid('month', 'week').required().messages({
+        'any.required': 'Duration type is required'
     })
 });
 

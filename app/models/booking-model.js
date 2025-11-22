@@ -23,6 +23,12 @@ const bookingschema = new mongoose.Schema({
         type: Number,
         required: true
     },
+    durationType: {
+        type: String,
+        enum: ['month', 'week'],
+        default: 'month',
+        required: true
+    },
     amount: {
         type: Number,
         required: true
