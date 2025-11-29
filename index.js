@@ -25,10 +25,10 @@ const { upload } = require('./app/middlewares/cloudinary.js');
 app.post('/user/register', userCtlr.register);
 app.post('/user/login', userCtlr.login);
 
-app.get('/user/allusers', authenticateUser, authorization(['admin', 'owner']), userCtlr.allusers);
+app.get('/user/allusers', authenticateUser, authorization(['admin']), userCtlr.allusers);
 app.get('/user/account/:id', authenticateUser, userCtlr.account);
 app.put('/user/update/:id', authenticateUser, userCtlr.updateAccount);
-app.delete('/user/remove/:id',authenticateUser, authorization(['admin', 'owner']), userCtlr.deleteAccount);
+app.delete('/user/remove/:id',authenticateUser, authorization(['admin']), userCtlr.deleteAccount);
 
 app.post(
     '/pg/createpg', 
@@ -44,14 +44,18 @@ app.get('/get/pgById/:id', authenticateUser, authorization(['admin', 'owner']), 
 app.put('/update/pg/:id', authenticateUser, authorization(['admin', 'owner']), pgCltr.updatePg);
 app.put('/verify/:id', authenticateUser, authorization(['admin']), pgCltr.verifyC);
 app.put('/approvePg/:id', authenticateUser, authorization(['admin']), pgCltr.approvePg);
-app.delete('/delete/pg/:id', authenticateUser, authorization(['admin', 'owner']), pgCltr.deletePg);
+app.delete('/delete/pg/:id', authenticateUser, authorization(['admin']), pgCltr.deletePg);
 
 app.post('/create/booking', authenticateUser, authorization(['user']), bookingCltr.createBooking);
 app.put('/confirm/:id', authenticateUser, authorization(['owner']), bookingCltr.confirmBooking);
 app.put('/cancel/:id', authenticateUser, authorization(['owner', 'user']), bookingCltr.cancelBooking);
 app.get('/getAll/bookings', authenticateUser,authorization(['admin', 'owner']), bookingCltr.getAllBookings);
-app.get('/getuser/booking', authenticateUser, bookingCltr.getUserBookings);
-app.get('/getowner/booking', authenticateUser, authorization(['admin', 'owner']), bookingCltr.getOwnerBookings);
+app.get('getuser/bookings', authenticateUser, authorization(['user']), bookingCltr.getUserBookings);
+app.get('/getowner/bookings', authenticateUser, authorization(['admin', 'owner']), bookingCltr.getOwnerBookings);
+
+app.post('/rating', authenticateUser, authorization(['user']), ratingCltr.create);
+app.get('/rating/:pgId', authenticateUser, ratingCltr.getPgRatings);
+
 
 app.listen(port, () => {
     console.log('Server running on the port', port);

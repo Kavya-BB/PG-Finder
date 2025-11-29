@@ -1,7 +1,7 @@
 const Joi = require('joi');
 
 const bookingValidationSchema = Joi.object({
-    pgId: Joi.string().required().messages({
+    pgId: Joi.string().hex().length(24).required().messages({
         'any.required': 'Pg Id is required'
     }),
     roomType: Joi.string().required().messages({

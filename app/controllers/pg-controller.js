@@ -18,7 +18,6 @@ pgCltr.createPg = async (req, res) => {
             return res.status(403).json({ error: 'only owners can create PG Listing!!!' });
         }
         const existingPg = await Pg.findOne({
-            ownerId: req.userId,
             'location.address': value.location.address,
             pgname: value.pgname
         });
@@ -43,7 +42,16 @@ pgCltr.createPg = async (req, res) => {
 
 pgCltr.getAllPgs = async (req, res) => {
     try {
-        const pgs = await Pg.find();
+        const role = req.role;
+        const userId = req.userId;
+        let pgs;
+        if(role === 'admin') {
+            pgs = await Pg.find();
+        } else if(role === 'owner') {
+            pgs = await Pg.find({ ownerId: userId });
+        } else {
+            return res.status(403).json({ error: 'Access deneid' });
+        }
         res.json(pgs);
     } catch(err) {
         console.log(err);
@@ -54,9 +62,14 @@ pgCltr.getAllPgs = async (req, res) => {
 pgCltr.getPgById = async (req, res) => {
     const id = req.params.id;
     try {
+        const role = req.role;
+        const userId = req.userId;
         const pg = await Pg.findById(id);
         if(!pg) {
-            res.status(404).json({ error: 'Pg not found' });
+            return res.status(404).json({ error: 'Pg not found' });
+        }
+        if (role === 'owner' && pg.ownerId.toString() !== userId) {
+            return res.status(403).json({ error: 'Not authorized to access this PG!' });
         }
         res.json(pg);
     } catch(err) {
@@ -71,13 +84,17 @@ pgCltr.updatePg = async (req, res) => {
         const body = req.body;
         const { error, value } = pgValidationSchema.validate(body, { abortEarly: false });
         if(error) {
-            res.status(400).json({ error: error.details.map(ele => ele.message) });
+            return res.status(400).json({ error: error.details.map(ele => ele.message) });
         }
-        const pg = await Pg.findByIdAndUpdate(id, value, { new: true });
-        if(!pg) {
-            res.status(404).json({ error: 'Pg not found' });
+        const pg = await Pg.findById(id);
+        if (!pg) {
+            return res.status(404).json({ error: 'Pg not found' });
         }
-        res.json(pg);
+        if(req.role == 'owner' && pg.ownerId.toString() !== req.userId) {
+            return res.status(403).json({ error: 'You can only update your Pg!!!'})
+        }
+        const updatedpg = await Pg.findByIdAndUpdate(id, value, { new: true });
+        res.json({ pg: updatedpg });
     } catch(err) {
         console.log(err);
         res.status(500).json({ error: 'something went wrong!!!' });
@@ -87,11 +104,15 @@ pgCltr.updatePg = async (req, res) => {
 pgCltr.deletePg = async (req, res) => {
     const id = req.params.id;
     try{
-        const pg = await Pg.findByIdAndDelete(id);
-        if(!pg) {
-            res.status(404).json({ error: 'Pg not found' });
+        if (req.role !== 'admin') {
+            return res.status(403).json({ error: 'Only admin can delete PG!' });
         }
-        res.json(pg);
+        const pg = await Pg.findById(id);
+        if(!pg) {
+            return res.status(404).json({ error: 'Pg not found' });
+        }
+        await Pg.findByIdAndDelete(id);
+        res.json({ message: 'PG deleted successfully!', pg });
     } catch(err) {
         console.log(err);
         res.status(500).json({ error: 'something went wrong!!!' });
@@ -100,13 +121,12 @@ pgCltr.deletePg = async (req, res) => {
 
 pgCltr.verifyC = async (req, res) => {
     const pgId = req.params.id;
-    const { isVerified } = req.body;
     try {
         const pg = await Pg.findById(pgId);
         if(!pg) {
-            res.status(404).json({ error: 'Pg not found' });
+            return res.status(404).json({ error: 'Pg not found' });
         }
-        pg.isVerified = isVerified;
+        pg.isVerified = req.body.isVerified;
         await pg.save();
         res.json({ message: isVerified ? "Certificate verified successfully" : "Certificate verification removed", 
             isVerified: pg.isVerified
@@ -118,15 +138,15 @@ pgCltr.verifyC = async (req, res) => {
 }
 
 pgCltr.approvePg = async (req, res) => {
-    const pgid = req.params.id;
+    const id = req.params.id;
     const { isApproved } = req.body;
     try {
-        const pg = await Pg.findById(pgid);
+        const pg = await Pg.findById(id);
         if(!pg) {
-            res.status(404).json({ error: 'something went wrong!!!' });
+            return res.status(404).json({ error: 'something went wrong!!!' });
         }
         if(isApproved == true && pg.isVerified == false) {
-            res.status(400).json({ error: "Cannot approve PG because certificate is not verified" });
+            return res.status(400).json({ error: "Cannot approve PG because certificate is not verified" });
         }
         pg.isApproved = isApproved;
         if(isApproved == true) {

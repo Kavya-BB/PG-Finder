@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Booking = require('../models/booking-model.js');
 const Pg = require('../models/pg-model.js');
 const bookingValidationSchema = require('../validations/booking-validation.js');
@@ -6,12 +7,20 @@ const bookingCltr = {};
 bookingCltr.createBooking = async (req, res) => {
     const body = req.body;
     try {
-        const { error, value } = bookingValidationSchema.validate(body);
+        const { error } = bookingValidationSchema.validate(body);
         if(error) {
             return res.status(400).json({ error: error.details });
         }
         const { pgId, roomType, duration, durationType } = req.body;
         const userId = req.userId;
+        const existingBooking = await Booking.findOne({
+            userId,
+            pgId,
+            status: { $in: ['pending', 'confirmed'] }
+        });
+        if(existingBooking) {
+            return res.status(400).json({ error: 'You already have an active booking for this Pg'});
+        }
         const pg = await Pg.findById(pgId);
         if(!pg) {
             return res.status(404).json({ error: 'Pg not found' });
@@ -21,7 +30,7 @@ bookingCltr.createBooking = async (req, res) => {
             return res.status(400).json({ error: 'Invalid room type'});
         }
         if(selectedRoom.count <= 0) {
-            return res.status(400).json({ error: 'Room not available anymore' });
+            return res.status(400).json({ error: 'Room not available' });
         }
         // const amount = selectedRoom.rent * duration;
         let amount;
@@ -32,6 +41,7 @@ bookingCltr.createBooking = async (req, res) => {
         } else {
             return res.status(400).json({ error: "durationType must be 'month' or 'week'" });
         }
+        amount = Math.round(Number(amount) * 100) / 100;
         const booking = await Booking.create({
             userId,
             pgId,
@@ -65,6 +75,11 @@ bookingCltr.confirmBooking = async (req, res) => {
         if(!pg) {
             return res.status(404).json({ error: 'Pg not found' });
         }
+        if(req.role == 'owner') {
+            if(!pg.ownerId || pg.ownerId.toString() != req.userId) {
+                return res.status(403).json({ error: 'You are not authorized to confirm this booking' });
+            }
+        }
         const selectedRoom = pg.roomTypes.find(ele => ele.roomType == booking.roomType);
         if(!selectedRoom) {
             return res.status(400).json({ error: 'Room type not found in pg' });
@@ -72,7 +87,10 @@ bookingCltr.confirmBooking = async (req, res) => {
         if (selectedRoom.count <= 0) {
             return res.status(400).json({ error: "Room not available" });
         }
-        selectedRoom.count -= 1;
+        selectedRoom.count  = selectedRoom.count - 1;
+        if(selectedRoom.count < 0) {
+            selectedRoom.count = 0;
+        }
         await pg.save();
         booking.status = 'confirmed';
         await booking.save();
@@ -88,6 +106,7 @@ bookingCltr.confirmBooking = async (req, res) => {
 
 bookingCltr.cancelBooking = async (req, res) => {
     const bookingId = req.params.id;
+    const role = req.role;
     try {
         let booking = await Booking.findById(bookingId);
         if(!booking) {
@@ -96,16 +115,29 @@ bookingCltr.cancelBooking = async (req, res) => {
         if(booking.status == "cancelled") {
             return res.status(400).json({ error: 'Already cancelled' });
         }
-        if(booking.status == "confirmed") {
+        if(role == 'user') {
+            if (booking.userId.toString() !== req.userId) {
+                return res.status(403).json({ error: 'You can cancel only your own bookings' });
+            }
+        } else if(role == 'owner') {
             const pg = await Pg.findById(booking.pgId);
             if(!pg) {
                 return res.status(404).json({ error: 'Pg not found' });
             }
-            const selectedRoom = pg.roomTypes.find(ele => ele.roomType == booking.roomType);
-            if(selectedRoom) {
-                selectedRoom.count += 1;
-                await pg.save();
+            if (!pg.ownerId || pg.ownerId.toString() !== req.userId) {
+                return res.status(403).json({ error: 'Not authorized to cancel this booking' });
             }
+        }
+        if(booking.status == "confirmed") {
+            const pg = await Pg.findById(booking.pgId);
+            if(pg) {
+                const selectedRoom = pg.roomTypes.find(ele => ele.roomType == booking.roomType);
+                if(selectedRoom) {
+                    selectedRoom.count = (selectedRoom.count || 0) + 1;
+                    await pg.save();
+                }
+            }
+            
         }
         booking.status = 'cancelled';
         await booking.save();
@@ -120,15 +152,46 @@ bookingCltr.cancelBooking = async (req, res) => {
 }
 
 bookingCltr.getAllBookings = async (req, res) => {
-    res.send('get all bookings')
+    try {
+        const bookings = await Booking.find()
+            .populate('userId', 'name email')
+            .populate('pgId', 'pgname location');
+        res.json({ bookings });
+    } catch(err) {
+        console.log(err);
+        res.status(500).json({ error: 'something went wrong!!!' });
+    }
 }
 
 bookingCltr.getUserBookings = async (req, res) => {
-    res.send('get user bookings')
+    try {
+        const userId = req.userId;
+        const bookings = await Booking.find({ userId })
+            .populate('userId', 'name email')
+            .populate('pgId', 'pgname location');
+        res.json({ bookings });
+    } catch(err) {
+        console.log(err);
+        res.status(500).json({ error: 'something went wrong!!!' });
+    }
 }
 
 bookingCltr.getOwnerBookings = async (req, res) => {
-    res.send('get owner bookings')
+    try {
+        const ownerId = req.userId;
+        const ownerPg = await Pg.find({ ownerId }).select('_id');
+        if(!ownerPg || ownerPg.length == 0) {
+            return res.json({ bookings: [] });
+        }
+        const pgIds = ownerPg.map(pg => pg._id);
+        const bookings = await Booking.find({ pgId: { $in: pgIds }})
+            .populate('userId', 'name email')
+            .populate('pgId', 'pgname location');
+        res.json({ bookings });
+    } catch(err) {
+        console.log(err);
+        res.status(500).json({ error: 'something went wrong!!!' });
+    }
 }
 
 module.exports = bookingCltr;

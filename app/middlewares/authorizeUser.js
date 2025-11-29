@@ -3,7 +3,7 @@ const authorizeUser = (roles) => {
         if(roles.includes(req.role)) {
             next();
         } else {
-            res.status(403).json({ error: "You are not admin/owner" });
+            res.status(403).json({ error: `Access denied, Allowed roles: ${roles}` });
         }
     }
 }

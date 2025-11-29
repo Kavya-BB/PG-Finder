@@ -1,9 +1,6 @@
 const mongoose = require('mongoose');
 
 const ratingSchema = new mongoose.Schema({
-    ratingId: {
-        type: String
-    },
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',

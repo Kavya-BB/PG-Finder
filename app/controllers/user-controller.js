@@ -22,7 +22,7 @@ userCtlr.register = async (req, res) => {
         if(user.role === 'admin') {
             const adminExist = await User.findOne({ role: "admin" });
             if(adminExist) {
-                res.status(403).json({ error: 'register as owner/user' });
+                return res.status(403).json({ error: 'register as owner/user' });
             }
         }
         await user.save();
@@ -72,9 +72,9 @@ userCtlr.allusers = async (req, res) => {
 
 userCtlr.account = async (req, res) => {
     try {
-        const user = await User.findById(req.userId);
+        const user = await User.findById(req.userId).selected('-password');
         if(!user) {
-            res.status(404).json({ error: 'user not found' });
+            return res.status(404).json({ error: 'user not found' });
         }
         res.json(user);
     } catch(err) {
@@ -87,11 +87,14 @@ userCtlr.updateAccount = async (req, res) => {
     const id = req.params.id;
     const body = req.body;
     try {
+        if (req.role !== 'admin' && req.userId.toString() !== id) {
+            return res.status(403).json({ error: 'You can update only your account' });
+        }
         const user = await User.findByIdAndUpdate(id, body, { new: true });
-    if(!user) {
-        res.status(404).json({ error: 'User not found' });
-    }
-    res.json(user);
+        if(!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        res.json(user);
     } catch(err) {
         console.log(err);
         res.status(500).json({ error: 'something went wrong!!!' });
@@ -101,11 +104,18 @@ userCtlr.updateAccount = async (req, res) => {
 userCtlr.deleteAccount = async (req, res) => {
     const id = req.params.id;
     try {
-        const user = await User.findByIdAndDelete(id);
+        if (req.role !== 'admin') {
+            return res.status(403).json({ error: 'Only admin can delete accounts' });
+        }
+        const user = await User.findById(id);
         if(!user) {
             return res.status(404).json({ error: 'User not found' });
         }
-        res.json(user);
+        if (user.role === 'admin') {
+            return res.status(403).json({ error: 'Admin deletion not allowed' });
+        }
+        await User.findByIdAndDelete(id);
+        res.json({ message: 'User deleted successfully', user });
     } catch(err){
         console.log(err);
         res.status(500).json({ error: 'something went wrong!!!' });
