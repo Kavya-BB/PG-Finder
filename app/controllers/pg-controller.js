@@ -78,6 +78,19 @@ pgCltr.getPgById = async (req, res) => {
     }
 };
 
+pgCltr.getPgLists = async (req, res) => {
+  try {
+    const pgs = await Pg.find({ isApproved: true }).select( "pgName address city description amenities price roomTypes rating images" );
+    if (!pgs || pgs.length === 0) {
+      return res.status(404).json({ message: 'No PGs found' });
+    }
+    return res.status(200).json(pgs);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 pgCltr.updatePg = async (req, res) => {
     try {
         const id = req.params.id;
