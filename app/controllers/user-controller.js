@@ -19,6 +19,7 @@ userCtlr.register = async (req, res) => {
         const salt = await bcryptjs.genSalt();
         const hash = await bcryptjs.hash(user.password, salt);
         user.password = hash;
+        
         if(user.role === 'admin') {
             const adminExist = await User.findOne({ role: "admin" });
             if(adminExist) {
