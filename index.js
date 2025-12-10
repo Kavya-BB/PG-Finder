@@ -24,9 +24,10 @@ const { upload } = require('./app/middlewares/cloudinary.js');
 
 app.post('/user/register', userCtlr.register);
 app.post('/user/login', userCtlr.login);
+app.get('/user/account', authenticateUser, userCtlr.account);
 
-app.get('/user/allusers', authenticateUser, authorization(['admin']), userCtlr.allusers);
-app.get('/user/account/:id', authenticateUser, userCtlr.account);
+
+app.get('/user/allusers', authenticateUser, authorization(['admin', 'owner']), userCtlr.allusers);
 app.put('/user/update/:id', authenticateUser, userCtlr.updateAccount);
 app.delete('/user/remove/:id',authenticateUser, authorization(['admin']), userCtlr.deleteAccount);
 

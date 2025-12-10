@@ -73,7 +73,7 @@ userCtlr.allusers = async (req, res) => {
 
 userCtlr.account = async (req, res) => {
     try {
-        const user = await User.findById(req.userId).selected('-password');
+        const user = await User.findById(req.userId);
         if(!user) {
             return res.status(404).json({ error: 'user not found' });
         }
