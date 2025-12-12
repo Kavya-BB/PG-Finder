@@ -80,7 +80,7 @@ pgCltr.getPgById = async (req, res) => {
 
 pgCltr.getPgLists = async (req, res) => {
   try {
-    const pgs = await Pg.find({ isApproved: true }).select( "pgName address city description amenities price roomTypes rating images" );
+    const pgs = await Pg.find({ isApproved: true }).select( "pgname location roomTypes description amenities pgPhotos rating" );
     if (!pgs || pgs.length === 0) {
       return res.status(404).json({ message: 'No PGs found' });
     }
@@ -135,11 +135,12 @@ pgCltr.deletePg = async (req, res) => {
 pgCltr.verifyC = async (req, res) => {
     const pgId = req.params.id;
     try {
+        const { isVerified } = req.body;
         const pg = await Pg.findById(pgId);
         if(!pg) {
             return res.status(404).json({ error: 'Pg not found' });
         }
-        pg.isVerified = req.body.isVerified;
+        pg.isVerified = isVerified;
         await pg.save();
         res.json({ message: isVerified ? "Certificate verified successfully" : "Certificate verification removed", 
             isVerified: pg.isVerified
