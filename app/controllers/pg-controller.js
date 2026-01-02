@@ -22,7 +22,7 @@ pgCltr.createPg = async (req, res) => {
             pgname: value.pgname
         });
         if(existingPg) {
-            return res.status(403).json({ error: 'PG with a same name and address already exists!!!' });
+            return res.status(409).json({ error: 'PG with a same name and address already exists!!!' });
         }
         const pgPhotos = Array.isArray(req.files?.pgPhotos) ? req.files.pgPhotos.map(file => file.path) : [];
         const pgCertificate = req.files?.pgCertificate?.[0]?.path || null;
@@ -92,25 +92,37 @@ pgCltr.getPgLists = async (req, res) => {
 };
 
 pgCltr.updatePg = async (req, res) => {
+    const { id } = req.params;
+    const body = req.body;
     try {
-        const id = req.params.id;
-        const body = req.body;
-        const { error, value } = pgValidationSchema.validate(body, { abortEarly: false });
-        if(error) {
-            return res.status(400).json({ error: error.details.map(ele => ele.message) });
-        }
         const pg = await Pg.findById(id);
         if (!pg) {
-            return res.status(404).json({ error: 'Pg not found' });
+            return res.status(404).json({ error: "PG not found" });
         }
-        if(req.role == 'owner' && pg.ownerId.toString() !== req.userId) {
-            return res.status(403).json({ error: 'You can only update your Pg!!!'})
+        if (pg.ownerId.toString() !== req.userId) {
+            return res.status(403).json({ error: "Unauthorized" });
         }
-        const updatedpg = await Pg.findByIdAndUpdate(id, value, { new: true });
-        res.json({ pg: updatedpg });
-    } catch(err) {
+        let pgPhotos = pg.pgPhotos;
+        if (Array.isArray(req.files?.pgPhotos)) {
+            pgPhotos = [...pgPhotos, ...req.files.pgPhotos.map(f => f.path)];
+        }
+        let pgCertificate = pg.pgCertificate;
+        if (req.files?.pgCertificate?.[0]) {
+            pgCertificate = req.files.pgCertificate[0].path;
+        }
+        const updatedPg = await Pg.findByIdAndUpdate(
+            id,
+            {
+                ...body,
+                pgPhotos,
+                pgCertificate
+            },
+            { new: true, runValidators: true }
+        );
+        res.json(updatedPg);
+    } catch (err) {
         console.log(err);
-        res.status(500).json({ error: 'something went wrong!!!' });
+        res.status(500).json({ error: "Failed to update PG" });
     }
 };
 
@@ -141,10 +153,17 @@ pgCltr.verifyC = async (req, res) => {
             return res.status(404).json({ error: 'Pg not found' });
         }
         pg.isVerified = isVerified;
+        if(isVerified == false) {
+            pg.isApproved = false;
+        }
         await pg.save();
-        res.json({ message: isVerified ? "Certificate verified successfully" : "Certificate verification removed", 
-            isVerified: pg.isVerified
-        })
+        res.json({ 
+            message: pg.isVerified 
+                ? "Certificate verified successfully" 
+                : "Certificate verification removed", 
+            isVerified: pg.isVerified, 
+            isApproved: pg.isApproved
+        });
     } catch(err) {
         console.log(err);
         res.status(500).json({ error: 'something went wrong!!!' });

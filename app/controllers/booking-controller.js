@@ -32,7 +32,6 @@ bookingCltr.createBooking = async (req, res) => {
         if(selectedRoom.count <= 0) {
             return res.status(400).json({ error: 'Room not available' });
         }
-        // const amount = selectedRoom.rent * duration;
         let amount;
         if(durationType == 'month') {
             amount = selectedRoom.rent * duration;
@@ -155,7 +154,7 @@ bookingCltr.getAllBookings = async (req, res) => {
     try {
         const bookings = await Booking.find()
             .populate('userId', 'name email')
-            .populate('pgId', 'pgname location');
+            .populate('pgId', 'pgname location')
         res.json({ bookings });
     } catch(err) {
         console.log(err);

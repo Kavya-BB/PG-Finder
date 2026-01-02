@@ -43,7 +43,16 @@ app.post(
 app.get('/get/allpgs', authenticateUser, authorization(['admin', 'owner']), pgCltr.getAllPgs);
 app.get('/get/pgById/:id', authenticateUser, authorization(['admin', 'owner']), pgCltr.getPgById);
 app.get('/get/pglists', authenticateUser, pgCltr.getPgLists);
-app.put('/update/pg/:id', authenticateUser, authorization(['admin', 'owner']), pgCltr.updatePg);
+app.put(
+  '/update/pg/:id',
+  authenticateUser,
+  authorization(['admin', 'owner']),
+  upload.fields([
+    { name: 'pgPhotos', maxCount: 5 },
+    { name: 'pgCertificate', maxCount: 1 }
+  ]),
+  pgCltr.updatePg
+);
 app.put('/verify/:id', authenticateUser, authorization(['admin']), pgCltr.verifyC);
 app.put('/approvePg/:id', authenticateUser, authorization(['admin']), pgCltr.approvePg);
 app.delete('/delete/pg/:id', authenticateUser, authorization(['admin']), pgCltr.deletePg);
@@ -51,8 +60,8 @@ app.delete('/delete/pg/:id', authenticateUser, authorization(['admin']), pgCltr.
 app.post('/create/booking', authenticateUser, authorization(['user']), bookingCltr.createBooking);
 app.put('/confirm/:id', authenticateUser, authorization(['owner']), bookingCltr.confirmBooking);
 app.put('/cancel/:id', authenticateUser, authorization(['owner', 'user']), bookingCltr.cancelBooking);
-app.get('/getAll/bookings', authenticateUser,authorization(['admin', 'owner']), bookingCltr.getAllBookings);
-app.get('getuser/bookings', authenticateUser, authorization(['user']), bookingCltr.getUserBookings);
+app.get('/getAll/bookings', authenticateUser,authorization(['admin']), bookingCltr.getAllBookings);
+app.get('/getuser/bookings', authenticateUser, authorization(['user']), bookingCltr.getUserBookings);
 app.get('/getowner/bookings', authenticateUser, authorization(['admin', 'owner']), bookingCltr.getOwnerBookings);
 
 app.post('/rating', authenticateUser, authorization(['user']), ratingCltr.create);
