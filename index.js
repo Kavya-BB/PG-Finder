@@ -15,8 +15,8 @@ configureDB();
 const userCtlr = require('./app/controllers/user-controller.js');
 const pgCltr = require('./app/controllers/pg-controller.js');
 const bookingCltr = require('./app/controllers/booking-controller.js');
-const paymentCltr = require('./app/controllers/payment-controller.js');
 const ratingCltr = require('./app/controllers/rating-controller.js');
+const paymentCltr = require('./app/controllers/payment-controller.js');
 
 const authenticateUser = require('./app/middlewares/authenticateUser.js');
 const authorization = require('./app/middlewares/authorizeUser.js');
@@ -67,6 +67,9 @@ app.get('/getowner/bookings', authenticateUser, authorization(['admin', 'owner']
 app.post('/rating', authenticateUser, authorization(['user']), ratingCltr.create);
 app.get('/rating/:pgId', authenticateUser, ratingCltr.getPgRatings);
 
+app.get('/api/v1/getKey', paymentCltr.getKey);
+app.post('/api/v1/payment/process', authenticateUser, paymentCltr.createOrder);
+app.post('/api/v1/payment/verify', authenticateUser, paymentCltr.verifyPayment);
 
 app.listen(port, () => {
     console.log('Server running on the port', port);
