@@ -1,3 +1,4 @@
+const geolib = require('geolib');
 const Pg = require('../models/pg-model.js');
 const { pgValidationSchema } = require('../validations/pg-validation.js');
 const User = require('../models/user-model.js');
@@ -194,5 +195,43 @@ pgCltr.approvePg = async (req, res) => {
         res.status(500).json({ error: 'something went wrong!!!' });
     }
 }
+
+pgCltr.getNearbyPgs = async (req, res) => {
+  try {
+    let { latitude, longitude, radius = 5 } = req.query;
+    latitude = Number(latitude);
+    longitude = Number(longitude);
+    radius = Number(radius);
+    if (isNaN(latitude) || isNaN(longitude)) {
+      return res.status(400).json({ error: "Invalid latitude or longitude" });
+    }
+    const pgs = await Pg.find({ isApproved: true });
+    const nearbyPgs = pgs
+      .filter(pg =>
+        pg?.location?.coordinates?.latitude &&
+        pg?.location?.coordinates?.longitude
+      )
+      .map(pg => {
+        const distanceInMeters = geolib.getDistance(
+          { latitude, longitude },
+          {
+            latitude: Number(pg.location.coordinates.latitude),
+            longitude: Number(pg.location.coordinates.longitude)
+          }
+        );
+        return {
+          ...pg._doc,
+          distance: distanceInMeters / 1000
+        };
+      })
+      .filter(pg => pg.distance <= radius)
+      .sort((a, b) => a.distance - b.distance);
+    res.json(nearbyPgs);
+  } catch (err) {
+    console.error("Nearby PG error:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
 
 module.exports = pgCltr;

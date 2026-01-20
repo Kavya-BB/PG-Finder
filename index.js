@@ -56,6 +56,7 @@ app.put(
 app.put('/verify/:id', authenticateUser, authorization(['admin']), pgCltr.verifyC);
 app.put('/approvePg/:id', authenticateUser, authorization(['admin']), pgCltr.approvePg);
 app.delete('/delete/pg/:id', authenticateUser, authorization(['admin']), pgCltr.deletePg);
+app.get('/pgs/nearby', authenticateUser, authorization(['user']), pgCltr.getNearbyPgs);
 
 app.post('/create/booking', authenticateUser, authorization(['user']), bookingCltr.createBooking);
 app.put('/confirm/:id', authenticateUser, authorization(['owner']), bookingCltr.confirmBooking);
