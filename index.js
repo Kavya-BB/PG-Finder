@@ -71,6 +71,9 @@ app.get('/rating/:pgId', authenticateUser, ratingCltr.getPgRatings);
 app.get('/api/v1/getKey', paymentCltr.getKey);
 app.post('/api/v1/payment/process', authenticateUser, paymentCltr.createOrder);
 app.post('/api/v1/payment/verify', authenticateUser, paymentCltr.verifyPayment);
+app.get('/user/payments', authenticateUser, paymentCltr.userPayments);
+app.get('/owner/payments', authenticateUser, authorization(['owner']), paymentCltr.ownerPayments);
+app.get('/admin/payments', authenticateUser, authorization(['admin']), paymentCltr.adminPayments);
 
 app.listen(port, () => {
     console.log('Server running on the port', port);
